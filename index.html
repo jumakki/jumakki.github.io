@@ -29,10 +29,6 @@ var mi_random_key, mi_random_key_recv, mi_device_info_recv, mi_device_info_send,
 var keypair, is_activated, own_public_key, device_public_key, shared_key, derived_key, mi_write_did;
 var device_new_id = "00626c742e332e31323976" + makeRandomID(6) + "415443";
 
-function resetFileSelector(){ 
-    document.getElementById("file").value = '';
-};
-
 function resetVariables() {
     busy = false;
     gattServer = null;
@@ -40,10 +36,9 @@ function resetVariables() {
     writeCharacteristic = null;
     miConnected = false;
     is_logged_in = false;
-    document.getElementById("known_id").value = '';
-    document.getElementById("mi_token").value = '';
+
     document.getElementById("mi_bind_key").value = '';
-	resetFileSelector();
+
 }
 
 function handleError(error) {
@@ -144,7 +139,7 @@ function miAction() {
                     temp = temp/100;
                     var hum = value.getUint8(2);
                     var tempTempString = "Temp/Humi: " + temp + "°C / " + hum + "%";
-                    document.getElementById("tempHumiData").innerHTML = tempTempString;
+                    // document.getElementById("tempHumiData").innerHTML = tempTempString;
                     addClog(tempTempString);
                 });
                 miAuthorization()
@@ -286,10 +281,6 @@ function clearLog() {
     document.getElementById("log").innerHTML = "Log:<br>";
 }
 
-function setStatus(status) {
-    addClog("Status: " + status);
-    document.getElementById("percent").innerHTML = "Status: " + status;
-}
 
 function updateFail(err) {
     addLog("Update error: " + err);
@@ -460,6 +451,8 @@ function decimalToHex00(d) {
   <input type="checkbox" id="hideUnknown"><br>
   <label for="namePrefix">BLE device name prefix filter(s)</label>
   <input type="text" id="namePrefix" value="" placeholder=""><br>
+  Mi Bind Key:<br>
+  <input size="40" type="text" id="mi_bind_key" value=""><br>
 
  <div id="log">Log:<br></div>
  <div id="result"></div>
