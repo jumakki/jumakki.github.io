@@ -162,15 +162,16 @@ function customAction() {
 function miAuthorization() {
     gattServer.getPrimaryService('f49cefd5-209b-4531-99bd-89fe2909931a')
         .then(service => {
-            addClog("Thermostat Custom Service");
+            addLog("Thermostat Custom Service");
             enc_main = service;
             return enc_main.getCharacteristic('f366dddb-ebe2-43ee-83c0-472ded74c8fa');
         }).then(characteristic => {
-            addClog("Device factory reset ID");
+            addLog("Device factory reset ID");
             enc_10 = characteristic;
             miConnected = true;
             var value = bytesToHex(enc_10.readValue());
-            addClog("Enc_10: " + value);
+            addLog("Enc_10: " + value);
+            document.getElementById("mi_bind_key").value = value;
         }).catch(handleError);
 }
 
