@@ -182,7 +182,6 @@ function doConnect() {
         writeCharacteristic = characteristic;
 	return characteristic.readValue();
     }).then(value => {
-	addLog("factory reset ID raw: " + value.buffer);
 	addLog("factory reset ID hex: " + bytesToHex(value.buffer));
 	bind_key = value.getUint32(0);
 	addLog("Bind key: " + bind_key);
@@ -191,9 +190,11 @@ function doConnect() {
 	document.getElementById("MAC").innerHTML = 'EPHE5-BT MAC: ' + decimalToHex00(buffer[4]) + decimalToHex00(buffer[5]) + decimalToHex00(buffer[6]) + decimalToHex00(buffer[7]) + decimalToHex00(buffer[8]) + decimalToHex00(buffer[9]);
         // miAuthorization();
         // TODO detectMi();
-	const writeBack = Uint8Array.of(bind_key);
-	addLog("writing back: " + writeBack);
-	return writeCharacteristic.writeValue(writeBack);
+	writeArr = new ArrayBuffer(4);
+	writeView = new DataView(writeArr);
+	writeView.setUint32(0, bind_key, true);
+	addLog("writing back hex: " + bytesToHex(writeView.buffer));
+	return writeCharacteristic.writeValue(writeView);
     }).then(_ => {
 	addLog("Bind key written back.");
     }).catch(error => { console.error(error); addLog("Error: " + error);});
