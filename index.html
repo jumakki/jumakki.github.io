@@ -193,8 +193,9 @@ function doConnect() {
         writeCharacteristic = characteristic;
 	return characteristic.readValue();
     }).then(value => {
-	addLog("factory reset ID raw: " + value);
-	addLog("factory reset ID hex: " + bytesToHex(value));
+	addLog("factory reset ID raw: " + value.buffer);
+	addLog("factory reset ID hex: " + bytesToHex(value.buffer));
+	addLog("Bind key: " + value.getUint32(0));
         // miAuthorization();
         // TODO detectMi();
     }).catch(handleError);
