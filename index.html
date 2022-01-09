@@ -195,10 +195,18 @@ function doConnect() {
     }).then(value => {
 	addLog("factory reset ID raw: " + value.buffer);
 	addLog("factory reset ID hex: " + bytesToHex(value.buffer));
-	addLog("Bind key: " + value.getUint32(0));
+	const bind_key = value.getUint32(0);
+	addLog("Bind key: " + bind_key);
+	document.getElementById("mi_bind_key").value = bind_key.toString(10);
+	const buffer = new Uint8Array(value.buffer);
+	document.getElementById("MAC").innerHTML = 'EPHE5-BT MAC: ' + buffer[4].toString(16) + buffer[5].toString(16) + buffer[6].toString(16) + buffer[7].toString(16) + buffer[8].toString(16) + buffer[9].toString(16);
         // miAuthorization();
         // TODO detectMi();
-    }).catch(handleError);
+	const writeBack = Uint8Array.of(bind_key);
+	return writeCharacteristic.writeValue(writeBack);
+    }).then(_ => {
+	addLog("Bind key written back.");
+    }).catch(error => { console.error(error); addLog("Error: " + error);});
 }
 
 function detectMi() {
@@ -461,7 +469,8 @@ function decimalToHex00(d) {
   <input type="checkbox" id="hideUnknown"><br>
   <label for="namePrefix">BLE device name prefix filter(s)</label>
   <input type="text" id="namePrefix" value="" placeholder=""><br>
-  Mi Bind Key:<br>
+  <div id="MAC">MAC</div><hr>
+  Bind Key:<br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
 
  <div id="log">Log:<br></div>
