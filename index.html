@@ -169,9 +169,13 @@ function miAuthorization() {
             addLog("Device factory reset ID");
             enc_10 = characteristic;
             miConnected = true;
-            var value = bytesToHex(enc_10.readValue());
-            addLog("Enc_10: " + value);
-            document.getElementById("mi_bind_key").value = value;
+            var hex = enc_10.readValue().then(function(dataView) {
+		    addLog("factory reset ID len: " + dataView.buffer.byteLength());
+		    addLog("factory reset ID raw: " + dataView.buffer);
+		    return bytesToHex(dataView.buffer);
+	    });
+            addLog("facotry reset ID: " + hex);
+            document.getElementById("mi_bind_key").value = hex;
         }).catch(handleError);
 }
 
