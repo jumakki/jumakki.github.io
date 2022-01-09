@@ -191,7 +191,8 @@ function doConnect() {
     }).then(characteristic => {
         addClog("Found Device factory reset ID");
         writeCharacteristic = characteristic;
-	var value = await characteristic.readValue();
+	return characteristic.readValue();
+    }).then(value => {
 	addLog("factory reset ID raw: " + value);
 	addLog("factory reset ID hex: " + bytesToHex(value));
         // miAuthorization();
