@@ -192,7 +192,7 @@ function doConnect() {
         // TODO detectMi();
 	writeArr = new ArrayBuffer(4);
 	writeView = new DataView(writeArr);
-	writeView.setUint32(0, bind_key, true);
+	writeView.setUint32(0, bind_key, false);
 	addLog("writing back hex: " + bytesToHex(writeView.buffer));
 	return writeCharacteristic.writeValue(writeView);
     }).then(_ => {
