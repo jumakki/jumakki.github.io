@@ -8,6 +8,7 @@
 <script>
 //BLE values
 var bluetoothDevice, gattServer, Theservice, writeCharacteristic;
+var bind_key;
 var ServiceMain, writeCharacteristicSpeed, nitifiyCharTemp, time_char, enc_main, enc_10, enc_19;
 //Firmware values
 var firmwareArray = "",
@@ -147,18 +148,6 @@ function miAction() {
         }).catch(handleError);
 }
 
-function customAction() {
-    gattServer.getPrimaryService('00001f10-0000-1000-8000-00805f9b34fb')
-        .then(service => {
-            addClog("Found custom Main service");
-            ServiceMain = service;
-            return ServiceMain.getCharacteristic('00001f1f-0000-1000-8000-00805f9b34fb');
-        }).then(characteristic => {
-            addClog("Found custom write characteristic");
-            settingsCharacteristics = characteristic;
-        }).catch(handleError);
-}
-
 function miAuthorization() {
     gattServer.getPrimaryService('f49cefd5-209b-4531-99bd-89fe2909931a')
         .then(service => {
@@ -195,14 +184,15 @@ function doConnect() {
     }).then(value => {
 	addLog("factory reset ID raw: " + value.buffer);
 	addLog("factory reset ID hex: " + bytesToHex(value.buffer));
-	const bind_key = value.getUint32(0);
+	bind_key = value.getUint32(0);
 	addLog("Bind key: " + bind_key);
 	document.getElementById("mi_bind_key").value = bind_key.toString(10);
 	const buffer = new Uint8Array(value.buffer);
-	document.getElementById("MAC").innerHTML = 'EPHE5-BT MAC: ' + buffer[4].toString(16) + buffer[5].toString(16) + buffer[6].toString(16) + buffer[7].toString(16) + buffer[8].toString(16) + buffer[9].toString(16);
+	document.getElementById("MAC").innerHTML = 'EPHE5-BT MAC: ' + decimalToHex00(buffer[4]) + decimalToHex00(buffer[5]) + decimalToHex00(buffer[6]) + decimalToHex00(buffer[7]) + decimalToHex00(buffer[8]) + decimalToHex00(buffer[9]);
         // miAuthorization();
         // TODO detectMi();
 	const writeBack = Uint8Array.of(bind_key);
+	addLog("writing back: " + writeBack);
 	return writeCharacteristic.writeValue(writeBack);
     }).then(_ => {
 	addLog("Bind key written back.");
@@ -222,10 +212,6 @@ function detectMi() {
             addLog("Detected Mi Thermometer");
             setStatus("Detected Mi Thermometer");
             miAction();
-        } else if (customEnabled) {
-            addLog("Detected custom Firmware");
-            setStatus("Detected custom Firmware");
-            customAction();
         } else {
             addLog("Connected");
             setStatus("Connected")
@@ -305,6 +291,14 @@ function updateFail(err) {
     setStatus("Update error: " + err);
 }
 
+function decimalToHex00(d) {
+    var hex = Number(d).toString(16);
+    while (hex.length < 2) {
+        hex = "0" + hex;
+    }
+    return hex;
+}
+	
 function decimalToHex(d, padding) {
     var hex = Number(d).toString(16);
     while (hex.length < 4) {
@@ -450,18 +444,7 @@ function makeSharedKey() {
 }
 
 </script>
-<script>
 
-function decimalToHex00(d) {
-    var hex = Number(d).toString(16);
-    while (hex.length < 2) {
-        hex = "0" + hex;
-    }
-    return hex;
-}
-
-
-</script>
 <big><big>BT pairer</big></big><br>
   <button type="button" onclick="connect();">Connect</button>
   <button type="button" onclick="reConnect();">Reconnect</button><br>
