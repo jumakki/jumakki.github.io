@@ -8,6 +8,7 @@
 <script>
 //BLE values
 var bluetoothDevice, gattServer, Theservice, writeCharacteristic;
+var bind_key;
 var ServiceMain, writeCharacteristicSpeed, nitifiyCharTemp, time_char, enc_main, enc_10, enc_19;
 //Firmware values
 var firmwareArray = "",
@@ -147,18 +148,6 @@ function miAction() {
         }).catch(handleError);
 }
 
-function customAction() {
-    gattServer.getPrimaryService('00001f10-0000-1000-8000-00805f9b34fb')
-        .then(service => {
-            addClog("Found custom Main service");
-            ServiceMain = service;
-            return ServiceMain.getCharacteristic('00001f1f-0000-1000-8000-00805f9b34fb');
-        }).then(characteristic => {
-            addClog("Found custom write characteristic");
-            settingsCharacteristics = characteristic;
-        }).catch(handleError);
-}
-
 function miAuthorization() {
     gattServer.getPrimaryService('f49cefd5-209b-4531-99bd-89fe2909931a')
         .then(service => {
@@ -169,13 +158,12 @@ function miAuthorization() {
             addLog("Device factory reset ID");
             enc_10 = characteristic;
             miConnected = true;
-            var buffer = enc_10.readValue().then(function(dataView) {
-                addLog("factory key len: " + dataView.buffer.byteLength);
-                addLog("factory key buffer raw: " + dataView.buffer);
-                return bytesToHex(dataView.buffer())
-            });
-            var hex = bytesToHex(enc_10.readValue());
-            addLog("factory key hex: " + hex);
+            var hex = enc_10.readValue().then(function(dataView) {
+		    addLog("factory reset ID len: " + dataView.buffer.byteLength());
+		    addLog("factory reset ID raw: " + dataView.buffer);
+		    return bytesToHex(dataView.buffer);
+	    });
+            addLog("facotry reset ID: " + hex);
             document.getElementById("mi_bind_key").value = hex;
         }).catch(handleError);
 }
@@ -192,9 +180,24 @@ function doConnect() {
     }).then(characteristic => {
         addClog("Found Device factory reset ID");
         writeCharacteristic = characteristic;
-        miAuthorization();
+	return characteristic.readValue();
+    }).then(value => {
+	addLog("factory reset ID hex: " + bytesToHex(value.buffer));
+	bind_key = value.getUint32(0);
+	addLog("Bind key: " + bind_key);
+	document.getElementById("mi_bind_key").value = bind_key.toString(10);
+	const buffer = new Uint8Array(value.buffer);
+	document.getElementById("MAC").innerHTML = 'EPHE5-BT MAC: ' + decimalToHex00(buffer[4]) + decimalToHex00(buffer[5]) + decimalToHex00(buffer[6]) + decimalToHex00(buffer[7]) + decimalToHex00(buffer[8]) + decimalToHex00(buffer[9]);
+        // miAuthorization();
         // TODO detectMi();
-    }).catch(handleError);
+	writeArr = new ArrayBuffer(4);
+	writeView = new DataView(writeArr);
+	writeView.setUint32(0, bind_key, false);
+	addLog("writing back hex: " + bytesToHex(writeView.buffer));
+	return writeCharacteristic.writeValue(writeView);
+    }).then(_ => {
+	addLog("Bind key written back.");
+    }).catch(error => { console.error(error); addLog("Error: " + error);});
 }
 
 function detectMi() {
@@ -210,10 +213,6 @@ function detectMi() {
             addLog("Detected Mi Thermometer");
             setStatus("Detected Mi Thermometer");
             miAction();
-        } else if (customEnabled) {
-            addLog("Detected custom Firmware");
-            setStatus("Detected custom Firmware");
-            customAction();
         } else {
             addLog("Connected");
             setStatus("Connected")
@@ -293,6 +292,14 @@ function updateFail(err) {
     setStatus("Update error: " + err);
 }
 
+function decimalToHex00(d) {
+    var hex = Number(d).toString(16);
+    while (hex.length < 2) {
+        hex = "0" + hex;
+    }
+    return hex;
+}
+	
 function decimalToHex(d, padding) {
     var hex = Number(d).toString(16);
     while (hex.length < 4) {
@@ -438,18 +445,7 @@ function makeSharedKey() {
 }
 
 </script>
-<script>
 
-function decimalToHex00(d) {
-    var hex = Number(d).toString(16);
-    while (hex.length < 2) {
-        hex = "0" + hex;
-    }
-    return hex;
-}
-
-
-</script>
 <big><big>BT pairer</big></big><br>
   <button type="button" onclick="connect();">Connect</button>
   <button type="button" onclick="reConnect();">Reconnect</button><br>
@@ -457,7 +453,8 @@ function decimalToHex00(d) {
   <input type="checkbox" id="hideUnknown"><br>
   <label for="namePrefix">BLE device name prefix filter(s)</label>
   <input type="text" id="namePrefix" value="" placeholder=""><br>
-  Mi Bind Key:<br>
+  <div id="MAC">MAC</div><hr>
+  Bind Key:<br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
 
  <div id="log">Log:<br></div>
